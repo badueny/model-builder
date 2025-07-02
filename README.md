@@ -105,18 +105,18 @@ await Model('settings').insertUpdate(
 ```js
 
 // cek ada data?
-const isExist = await Model('users').where('email', email).exists();
+const isExist = await Model('users').where('email', email).exists(); //output -> true|false
 
 // ambil array email saja
-const emails = await Model('users').pluck('email');
+const emails = await Model('users').pluck('email'); //output -> ambil array satu kolom tanpa harus select
 
 // fungsi agregat lain
-const lowest  = await Model('orders').min('total');
-const highest = await Model('orders').max('total');
+const lowest  = await Model('orders').min('total'); //output -> nilai terendah
+const highest = await Model('orders').max('total'); //output -> nilai tertinggi
 
 ````
 
-#### Contoh DataTables Server-side
+#### Contoh Penggunaan Untuk DataTables Server-side
 
 ```js
 
@@ -180,5 +180,5 @@ node examples/example.js
 
 ```
 📜 Lisensi.
-MIT License — bebas digunakan dan dimodifikasi.
+MIT License — Bebas digunakan dan dimodifikasi.
 
