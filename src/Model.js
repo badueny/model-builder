@@ -14,6 +14,7 @@ class Model {
     this._values = [];
   }
 
+  /*───── BASIC SELECT ──────*/
   select(columns = '*') {
     if (typeof columns === 'string') {
       this._select = columns;
@@ -33,6 +34,7 @@ class Model {
     return this;
   }
 
+  /*───── JOIN ──────*/
   join(table, onClause) {
     this._joins += ` INNER JOIN ${table} ON ${onClause}`;
     return this;
@@ -43,6 +45,7 @@ class Model {
     return this;
   }
 
+  /*───── WHERE ──────*/
   where(column, value) {
     this._wheres += this._wheres ? ` AND ${column} = ?` : `WHERE ${column} = ?`;
     this._values.push(value);
@@ -84,7 +87,6 @@ class Model {
     return this;
   }
 
-
   orWhere(column, value) {
     this._wheres += this._wheres ? ` OR ${column} = ?` : `WHERE ${column} = ?`;
     this._values.push(value);
@@ -105,12 +107,6 @@ class Model {
     return this.orWhereWithOperator(column, operator, value);
   }
 
-  /*
-  .orWhereMultiOp([
-    { column: 'name', operator: 'LIKE', value: '%admin%' },
-    { column: 'email', operator: 'LIKE', value: '%example.com' }
-  ])
-  */
   orWhereMultiOp(conditions = []) {
     if (!conditions.length) return this;
 
@@ -129,7 +125,6 @@ class Model {
 
     return this;
   }
-
 
   whereIn(column, values = []) {
     if (!Array.isArray(values) || values.length === 0) return this;
@@ -150,6 +145,9 @@ class Model {
     return this;
   }
 
+  /*───────────────────────────
+  │ GROUP / HAVING / ORDER / LIMIT
+  ───────────────────────────*/
   groupBy(columns) {
     if (Array.isArray(columns)) {
       this._groupBy = ` GROUP BY ${columns.join(', ')}`;
@@ -159,13 +157,11 @@ class Model {
     return this;
   }
 
-
   having(condition, value) {
     this._having = ` HAVING ${condition}`;
     if (value !== undefined) this._values.push(value);
     return this;
   }
-
 
   orderBy(column, direction = 'ASC') {
     this._orderBy = ` ORDER BY ${column} ${direction.toUpperCase()}`;
@@ -177,10 +173,26 @@ class Model {
     return this;
   }
 
+  /*───────── CLONE ────────────
+  │ duplikasi state builder (berguna untuk count(), exists(), dsb.)
+  ───────────────────────────*/
+  clone() {
+    const dup            = new Model(this.table, this.conn);
+    dup._select          = this._select;
+    dup._joins           = this._joins;
+    dup._wheres          = this._wheres;
+    dup._groupBy         = this._groupBy;
+    dup._having          = this._having;
+    dup._orderBy         = this._orderBy;
+    dup._limit           = this._limit;
+    dup._values          = [...this._values];
+    return dup;
+  }
+
+  /*───── BUILD & DEBUG ──────*/
   _buildSQL() {
     return `SELECT ${this._select} FROM ${this.table}${this._joins}${this._wheres ? ' ' + this._wheres : ''}${this._groupBy}${this._having}${this._orderBy}${this._limit}`;
   }
-
 
   debug() {
     console.log(this._buildSQL());
@@ -188,6 +200,7 @@ class Model {
     return this;
   }
 
+  /*───── GETTERS ──────*/
   async get() {
     const sql = this._buildSQL();
     const runner = this.conn || db; // ← gunakan koneksi manual jika ada
@@ -202,6 +215,7 @@ class Model {
     return row || null;
   }
 
+  /*───── PAGINATE ──────*/
   async paginate(page = 1, perPage = 10) {
     const offset = (page - 1) * perPage;
     const sql = `SELECT ${this._select} FROM ${this.table}${this._joins} ${this._wheres}${this._groupBy}${this._having}${this._orderBy} LIMIT ? OFFSET ?`;
@@ -218,6 +232,9 @@ class Model {
     return { data, total, page, perPage, lastPage };
   }
 
+  /*──────── COUNTING ────────
+  │ COUNT / SUM / AVG / MIN / MAX
+  ───────────────────────────*/
   async count(column = '*') {
     this._select = `COUNT(${column}) AS total`;
     const runner = this.conn || db;
@@ -241,6 +258,32 @@ class Model {
     this._reset();
     return rows[0]?.average || 0;
   }
+  
+  async min(col){
+    this._select=`MIN(${col}) AS min`; const [r]=await (this.conn||db).query(this._buildSQL(),this._values); this._reset(); return r[0]?.min||null; } // 🔹 NEW
+  async max(col){
+    this._select=`MAX(${col}) AS max`; const [r]=await (this.conn||db).query(this._buildSQL(),this._values); this._reset(); return r[0]?.max||null; } // 🔹 NEW
+
+  /*───────────────────────────
+  │ EXISTS – boolean cepat 
+  ───────────────────────────*/
+  async exists() {
+    const clone = this.clone().select('1').limit(1);
+    const [r]   = await (clone.conn||db).query(clone._buildSQL(), clone._values);
+    return r.length > 0;
+  }
+
+  /*───────────────────────────
+  │ PLUCK – ambil satu kolom semua baris 
+  ───────────────────────────*/
+  async pluck(column) {
+    const rows = await this.select(column).get();
+    return rows.map(r => r[column]);
+  }
+
+  /*─────── TRANSACTIONS ────────
+  │ INSERT / BULK INSERT / UPSERT / UPDATE / DELETE
+  ───────────────────────────*/
 
     /* ---------- INSERT ---------- */
   async insert(data = {}) {
@@ -304,7 +347,7 @@ class Model {
     return res.affectedRows;
   }
 
-
+  /*─────── RESET ───────*/
   _reset() {
     this._select = '*';
     this._joins = '';
