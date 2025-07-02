@@ -22,6 +22,9 @@ Terinspirasi dari Laravel Eloquent dan Knex.js, `model-builder` memungkinkan kam
 | `get()`                     | Ambil semua hasil query                                   |
 | `paginate()`                | Ambil data per halaman + total count                      |
 | `count()`, `sum()`, `avg()` | Fungsi agregat                                            |
+| `min()`, `max()`            | Fungsi agregat                                            |
+| `exists()`                  | Boolean cepat untuk cek data                              |
+| `pluck()`                   | Ambil satu kolom semua baris                              |
 | `withTransaction()`         | Wrapper helper untuk transaksi otomatis                   |
 
 
@@ -97,6 +100,21 @@ await Model('settings').insertUpdate(
 );
 
 ```
+
+#### Exist, Pluck, min, max
+```js
+
+// cek ada data?
+const isExist = await Model('users').where('email', email).exists();
+
+// ambil array email saja
+const emails = await Model('users').pluck('email');
+
+// fungsi agregat lain
+const lowest  = await Model('orders').min('total');
+const highest = await Model('orders').max('total');
+
+````
 
 #### Contoh DataTables Server-side
 
