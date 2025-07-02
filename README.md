@@ -1,5 +1,5 @@
-Modular **SQL Query Builder dan Helper Transaksi** untuk Node.js + MySQL.
-Terinspirasi dari Laravel Eloquent dan Knex.js, `model-builder` memungkinkan kamu membangun query SQL secara fleksibel dan elegan tanpa ORM besar.
+Modular **SQL Query Builder dan Helper Transaksi** untuk **Node.js + MySQL**.
+Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan kamu membangun query SQL secara fleksibel dan elegan tanpa ORM besar.
 
 ## Fitur Utama
 
