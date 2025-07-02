@@ -326,6 +326,33 @@ class Model {
     return insertId;
   }
 
+  /* ---------- BULK UPSERT ---------- */                     
+  /**
+   * upsertMany(rows, updateCols = [])  
+   * - rows        : array of objects
+   * - updateCols  : kolom yang perlu di‑update saat duplicate.  
+   *                 Kosong ⇒ semua kolom kecuali PK.
+   */
+  async upsertMany(rows = [], updateCols = []) {
+    if (!Array.isArray(rows) || rows.length === 0) return 0;
+  
+    const cols   = Object.keys(rows[0]);
+    const phRow  = `(${cols.map(() => '?').join(', ')})`;
+    const phAll  = rows.map(() => phRow).join(', ');
+    const vals   = rows.flatMap(r => cols.map(c => r[c]));
+  
+    // kalau updateCols belum ditentukan, update semua kecuali kolom pertama (anggap PK)
+    if (updateCols.length === 0) updateCols = cols.slice(1);
+  
+    const updates = updateCols.map(c => `${c}=VALUES(${c})`).join(', ');
+  
+    const sql = `INSERT INTO ${this.table} (${cols.join(', ')}) VALUES ${phAll}
+                 ON DUPLICATE KEY UPDATE ${updates}`;
+  
+    const [res] = await (this.conn || db).query(sql, vals);
+    return res.affectedRows;      // insert + update rows (MySQL behaviour)
+  }
+  
   /* ---------- UPDATE ---------- */
   async update(data = {}) {
     if (!this._wheres) throw new Error('update() membutuhkan where()!');
@@ -345,6 +372,20 @@ class Model {
     const [res] = await runner.query(sql, this._values);
     this._reset();
     return res.affectedRows;
+  }
+
+  /* ---------- INCREMENT / DECREMENT ---------- */           
+  async increment(column, amount = 1) {
+    if (!this._wheres) throw new Error('increment() membutuhkan where()!');
+    const sql   = `UPDATE ${this.table} SET ${column} = ${column} + ? ${this._wheres}`;
+    const vals  = [amount, ...this._values];
+    const [res] = await (this.conn || db).query(sql, vals);
+    this._reset();
+    return res.affectedRows;
+  }
+  
+  async decrement(column, amount = 1) {                       
+    return this.increment(column, -amount);
   }
 
   /*─────── RESET ───────*/
