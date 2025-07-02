@@ -1,4 +1,4 @@
-const db = require('../config/db'); // ganti sesuai lokasi koneksi pool
+const db = require('../config/db'); //← Sesuaikan dengan lokasi konfig awal db
 const makeModel = require('./Model');
 
 async function withTransaction(callback) {
