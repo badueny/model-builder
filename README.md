@@ -30,22 +30,6 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 | `withTransaction()`         | Wrapper helper untuk transaksi otomatis dan               |
 |                             | Commit otomatis jika sukses, rollback jika error.         |
 
-
-## Instalasi
-
-```bash
-npm i @awenk/model-builder
-```
-atau
-
-```bash
-npm install github:badueny/model-builder
-```
-Atau
-```bash
-npm install git+https://github.com/badueny/model-builder.git
-```
-
 ## Contoh Penggunaan
 
 #### Basic Query
@@ -189,14 +173,22 @@ const pool = mysql.createPool({
 module.exports = pool;
 
 ````
-```yaml
+
+## Instalasi
+
+```bash
+npm install github:badueny/model-builder
+```
+atau
+```bash
+npm install git+https://github.com/badueny/model-builder.git
+```
 
 ## ✅ Cara Jalankan Contoh Lokal
 
+```yaml
 Pastikan kamu sudah punya koneksi `config/db.js` yang mengekspor pool `mysql2/promise`.
-
-Lalu:
-
+````
 ```bash
 git clone https://github.com/badueny/model-builder.git
 cd model-builder
