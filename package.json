@@ -1,0 +1,20 @@
+{
+  "name": "@awenk/model-builder",
+  "version": "1.0.0",
+  "description": "Dynamic SQL query builder & mini ORM for Node + MySQL",
+  "main": "index.js",
+  "type": "commonjs",
+  "keywords": ["sql", "query-builder", "mysql", "nodejs"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/badueny/model-builder.git"
+  },
+  "author": "Awenk",
+  "license": "MIT",
+  "scripts": {
+    "test": "node test/model.test.js"
+  },
+  "peerDependencies": {
+    "mysql2": ">=3"
+  }
+}
