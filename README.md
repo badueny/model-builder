@@ -16,8 +16,10 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 | `insert()`                  | Simpan 1 data                                             |
 | `insertMany()`              | Simpan bulk array                                         |
 | `insertUpdate()`            | UPSERT (insert or update on duplicate)                    |
+| `upsertMany()`              | Bulk UPSERT (insert or update ON DUPLICATE KEY UPDATE)    |
 | `update()`                  | Update dengan WHERE (guarded)                             |
 | `delete()`                  | Hapus dengan WHERE (guarded)                              |
+| `increment()`,`decrement()` | Modifikasi nilai kolom tanpa ambil data dulu.             |
 | `first()`                   | Ambil 1 baris data                                        |
 | `get()`                     | Ambil semua hasil query                                   |
 | `paginate()`                | Ambil data per halaman + total count                      |
@@ -25,7 +27,8 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 | `min()`, `max()`            | Fungsi agregat                                            |
 | `exists()`                  | Boolean cepat untuk cek data                              |
 | `pluck()`                   | Ambil satu kolom semua baris                              |
-| `withTransaction()`         | Wrapper helper untuk transaksi otomatis                   |
+| `withTransaction()`         | Wrapper helper untuk transaksi otomatis dan               |
+|                             | Commit otomatis jika sukses, rollback jika error.         |
 
 
 ## Instalasi
@@ -99,6 +102,28 @@ await Model('settings').insertUpdate(
   ['key'] // kolom unik
 );
 
+```
+
+#### Insert atau Update Banyak (Bulk Upsert)
+```js
+
+await Model('products').upsertMany(
+  [
+    { id: 1, name: 'Kopi',  stock: 100 },
+    { id: 2, name: 'Teh',   stock: 80  }
+  ],
+  ['name', 'stock']       // kolom yg diupdate jika duplicate
+);
+
+````
+
+#### Increment decrement
+```js
+// tambah stok 5
+await Model('products').where('id', pid).increment('stock', 5);
+
+// kurangi saldo 10.000,-
+await Model('users').where('id', uid).decrement('balance', 10000);
 ```
 
 #### Exist, Pluck, min, max
