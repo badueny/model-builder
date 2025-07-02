@@ -14,24 +14,34 @@ class Model {
     this._values = [];
   }
 
-  /*───── BASIC SELECT ──────*/
+  /*───────BASIC SELECT──────*/
+  //update select;
   select(columns = '*') {
-    if (typeof columns === 'string') {
-      this._select = columns;
-    } else if (Array.isArray(columns)) {
-      this._select = columns.map(col => `\`${col}\``).join(', ');
-    } else if (
-      typeof columns === 'object' &&
-      columns !== null &&
-      !Array.isArray(columns)
-    ) {
-      this._select = Object.entries(columns)
-        .map(([col, alias]) => `\`${col}\` AS \`${alias}\``)
-        .join(', ');
-    } else {
-      this._select = '*';
-    }
-    return this;
+  if (typeof columns === 'string') {
+    this._select = columns;
+  } else if (Array.isArray(columns)) {
+    this._select = columns.map(col => this._wrapIfNeeded(col)).join(', ');
+  } else if (typeof columns === 'object' && columns !== null) {
+    this._select = Object.entries(columns)
+      .map(([col, alias]) => `${this._wrapIfNeeded(col)} AS \`${alias}\``)
+      .join(', ');
+  } else {
+    this._select = '*';
+  }
+  return this;
+}
+
+
+
+  _wrapIfNeeded(col) {
+    // Jika ada fungsi SQL atau operator
+    if (/[\s()+\-*/%]/.test(col) || /\(.+\)/.test(col)) return col;
+
+    // Jika format alias.column → jangan bungkus
+    if (/^[a-zA-Z0-9_]+\.[a-zA-Z0-9_]+$/.test(col)) return col;
+
+    // Kolom biasa → bungkus
+    return `\`${col}\``;
   }
 
   /*───── JOIN ──────*/
