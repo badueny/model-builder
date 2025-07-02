@@ -17,10 +17,18 @@ class Model {
   select(columns = '*') {
     if (typeof columns === 'string') {
       this._select = columns;
-    } else if (typeof columns === 'object') {
+    } else if (Array.isArray(columns)) {
+      this._select = columns.map(col => `\`${col}\``).join(', ');
+    } else if (
+      typeof columns === 'object' &&
+      columns !== null &&
+      !Array.isArray(columns)
+    ) {
       this._select = Object.entries(columns)
-        .map(([col, alias]) => `${col} AS ${alias}`)
+        .map(([col, alias]) => `\`${col}\` AS \`${alias}\``)
         .join(', ');
+    } else {
+      this._select = '*';
     }
     return this;
   }
