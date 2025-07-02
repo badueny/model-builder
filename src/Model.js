@@ -1,4 +1,4 @@
-const db = require('../../../../config/db');
+const db = require('../../../../config/db'); //← Sesuaikan dengan lokasi konfig awal db
 
 class Model {
   constructor(table, conn = null) {
