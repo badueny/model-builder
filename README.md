@@ -30,6 +30,7 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 | `pluck()`                   | Ambil satu kolom semua baris                              |
 | `withTransaction()`         | Wrapper helper untuk transaksi otomatis dan               |
 |                             | Commit otomatis jika sukses, rollback jika error.         |
+| `enableAudit()`	      | Catatan log transaksi otomatis				  |
 
 ## Contoh Penggunaan
 
@@ -176,6 +177,29 @@ router.post('/datatable/users', async (req, res) => {
   });
 });
 
+```
+
+#### Audit Log
+Struktur Audit Table.
+```sql
+CREATE TABLE IF NOT EXISTS audit_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    table_name VARCHAR(50),
+    action CHAR(250),
+    record_id VARCHAR(36),
+    before_data JSON,
+    after_data JSON,
+    user_id CHAR(36),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+```
+Penggunaan:
+.enableAudit(table, meta); 
+```sql
+await Model('users')
+  .where('id', 5)
+  .enableAudit('audit_log', { userId: 'admin123' })
+  .update({ name: 'Awenk' });
 ```
 
 #### Integrasi MySQL Pool
