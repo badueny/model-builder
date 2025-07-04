@@ -11,6 +11,7 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 | `whereOp()`                 | WHERE dengan operator fleksibel (`>=`, `!=`, `LIKE`, dll) |
 | `whereIn()`                 | WHERE IN untuk array nilai                                |
 | `whereLikeAny()`            | LIKE di banyak kolom secara OR                            |
+| `prependParam()`            | mengatur urutan parameter query SQL didalam select        |
 | `groupBy()`, `having()`     | GROUP BY dan HAVING dengan support placeholder            |
 | `orderBy()`, `limit()`      | Sorting dan pembatasan hasil                              |
 | `insert()`                  | Simpan 1 data                                             |
@@ -124,6 +125,23 @@ const lowest  = await Model('orders').min('total'); //output -> nilai terendah
 const highest = await Model('orders').max('total'); //output -> nilai tertinggi
 
 ````
+#### prependParam
+berguna untuk mengatur urutan parameter query SQL didalam select.
+```js
+const model = Model('table a');
+model.select(
+  {'a.name':'name',
+  ['(SELECT COUNT(*) FROM tableb WHERE extra_coloumn = ?']: 'total'
+})
+.where('id', 1)
+.prependParam('extra_value')
+.get();
+```
+akan mendapatkan hasil SQL:
+```sql
+SELECT a.name AS name, (SELECT COUNT(*) FROM tableb WHERE extra_coloumn = ?) AS total FROM table a WHERE id = ?
+_values: ['extra_value'], 1]  
+```
 
 #### Contoh Penggunaan Untuk DataTables Server-side
 
