@@ -201,24 +201,6 @@ await Model('users')
   .enableAudit('audit_log', { userId: 'admin123' })
   .update({ name: 'Awenk' });
 ```
-
-#### Integrasi MySQL Pool
-Contoh `config/db.js`:
-```js
-const mysql = require('mysql2/promise');
-
-const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  database: 'mydb',
-  waitForConnections: true,
-  connectionLimit: 10
-});
-
-module.exports = pool;
-
-````
-
 ## Instalasi
 
 ```bash
@@ -234,6 +216,22 @@ npm install git+https://github.com/badueny/model-builder.git
 ```yaml
 Pastikan kamu sudah punya koneksi `config/db.js` yang mengekspor pool `mysql2/promise`.
 ````
+#### Integrasi MySQL Pool
+Isi file -> `config/db.js`:
+```js
+const mysql = require('mysql2/promise');
+
+const pool = mysql.createPool({
+  host: 'localhost',
+  user: 'root',
+  database: 'mydb',
+  waitForConnections: true,
+  connectionLimit: 10
+});
+
+module.exports = pool;
+````
+
 ```bash
 git clone https://github.com/badueny/model-builder.git
 cd model-builder
