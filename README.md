@@ -151,7 +151,7 @@ console.log(result);
   'ss.id': 'id',
   ['(SELECT COUNT(*) FROM queues q WHERE q.slot_id = ss.id AND DATE(q.waktu_booking) = ? AND q.status IN ("booking","proses"))']: 'jumlah_booking'
 })
-.prepend('2025-06-27')
+.prependParam('2025-06-27')
 ```
 
 ---
@@ -159,8 +159,8 @@ console.log(result);
 ## 🧩 Utilities
 
 ```js
-.prepend('value')             // prepend 1 param
-.prepend(['v1', 'v2'])        // prepend multiple
+.prependParam('value')             // prepend 1 param
+.prependParam(['v1', 'v2'])        // prepend multiple
 .debug()                      // log query SQL dan values
 .clone()                      // clone instance builder
 ```
@@ -170,7 +170,7 @@ console.log(result);
 ## 🔐 Keamanan
 
 - Query menggunakan parameter `?` → aman dari SQL injection
-- Subquery aman dengan `.prepend()`
+- Subquery aman dengan `.prependParam()`
 - Tidak ada interpolasi nilai langsung ke query
 
 ---
