@@ -1,4 +1,4 @@
-const db = require('../config/db'); //← Sesuaikan dengan lokasi konfig awal db
+const db = require('../../../../config/db'); //← Sesuaikan dengan lokasi konfig awal db
 const makeModel = require('./Model');
 
 async function withTransaction(callback) {
