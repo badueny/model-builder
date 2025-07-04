@@ -183,6 +183,27 @@ class Model {
     return this;
   }
 
+  /*──────────── preped Param ──────────
+  │ prependParam(value) – menambahkan nilai ke awal array _values
+  |
+  │ Catatan: ini berguna untuk mengatur urutan parameter query SQL didalam select 
+  │ Contoh:
+  │   const model = Model('table a');
+  │   model.select({'a.name':'name',['(SELECT COUNT(*) FROM tableb WHERE extra_coloumn = ?']: 'total'}).where('id', 1).prependParam('extra_value').get();
+  │   // SQL: SELECT a.name AS name, (SELECT COUNT(*) FROM tableb WHERE extra_coloumn = ?) AS total FROM table a WHERE id = ?
+  │   // _values: ['extra_value'], 1]  
+  │   // Ini akan memastikan 'extra_value' ada di awal _values
+  | GUNAKAN prependParam(['extra_value_1','extra_value_2']); //jika query select lebih dari satu
+  ───────────────────────────*/
+  prependParam(value) {
+    if (Array.isArray(value)) {
+    this._values = [...value, ...this._values];
+    } else {
+      this._values.unshift(value);
+    }
+    return this;
+  }
+
   /*───────── CLONE ────────────
   │ duplikasi state builder (berguna untuk count(), exists(), dsb.)
   ───────────────────────────*/
