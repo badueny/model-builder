@@ -139,8 +139,11 @@ model.select(
 ```
 akan mendapatkan hasil SQL:
 ```sql
-SELECT a.name AS name, (SELECT COUNT(*) FROM tableb WHERE extra_coloumn = ?) AS total FROM table a WHERE id = ?
-_values: ['extra_value'], 1]  
+SELECT 
+	a.name AS name, 
+	(SELECT COUNT(*) FROM tableb WHERE extra_coloumn = 'extra_value') AS total 
+FROM table a 
+WHERE a.id=1
 ```
 
 #### Contoh Penggunaan Untuk DataTables Server-side
