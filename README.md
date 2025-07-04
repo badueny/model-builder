@@ -32,6 +32,162 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 |                             | Commit otomatis jika sukses, rollback jika error.         |
 | `enableAudit()`	      | Catatan log transaksi otomatis				  |
 
+## 🧱 Method Builder
+
+### 📄 Select
+
+```js
+.select('*')
+.select(['id', 'name'])
+.select({ 'u.name': 'nama', 'COUNT(*)': 'total' })  // alias dan fungsi
+```
+
+### 🔍 Where & Filter
+
+```js
+.where('status', 'active')
+.whereOp('age', '>=', 18)
+.orWhere('role', 'editor')
+.whereIn('id', [1, 2, 3])
+.whereLikeAny(['name', 'email'], 'admin')
+.whereMultiOp([{ column: 'status', operator: '=', value: 'active' }])
+```
+
+### 🔗 Join
+
+```js
+.join('roles r', 'r.id = u.role_id')
+.leftJoin('profiles p', 'p.user_id = u.id')
+```
+
+### 📦 Group / Having / Order / Limit
+
+```js
+.groupBy(['role', 'status'])
+.having('COUNT(*) > ?', 5)
+.orderBy('created_at', 'desc')
+.limit(10)
+.offset(5)
+```
+
+---
+
+## 💳 Eksekusi
+
+| Method        | Keterangan                     |
+|---------------|--------------------------------|
+| `.get()`      | Ambil semua hasil              |
+| `.first()`    | Ambil 1 data (LIMIT 1)         |
+| `.exists()`   | Cek apakah ada data            |
+| `.pluck(col)` | Ambil semua isi 1 kolom        |
+| `.debug()`    | Lihat query SQL & value        |
+| `.clone()`    | Duplikat instance builder      |
+
+---
+
+## 🔢 Increment / Decrement
+
+```js
+await Model('produk')
+  .where('id', 'PRD001')
+  .increment('stok');         // stok + 1
+
+await Model('produk')
+  .where('id', 'PRD001')
+  .decrement('stok', 3);      // stok - 3
+```
+
+> ⚠️ Wajib gunakan `.where()` agar aman. Tanpa `WHERE`, akan throw error.
+
+---
+
+## 🔄 Insert / Update / Delete
+
+```js
+.insert({ name: 'John' })
+.insertMany([{...}, {...}])
+.insertUpdate({ id: 1, name: 'Baru' }, ['id'])  // upsert
+
+.update({ name: 'Update' }).where('id', 1)
+.delete().where('id', 1)
+```
+
+---
+
+## 🔍 Aggregate
+
+```js
+.count('id')
+.sum('jumlah')
+.avg('nilai')
+.min('stok')
+.max('harga')
+```
+
+---
+
+## 📑 Pagination
+
+```js
+const result = await Model('users').paginate(2, 10);
+console.log(result);
+/*
+{
+  data: [...],
+  total: 123,
+  page: 2,
+  perPage: 10,
+  lastPage: 13
+}
+*/
+```
+
+---
+
+## 💡 Subquery Support
+
+```js
+.select({
+  'ss.id': 'id',
+  ['(SELECT COUNT(*) FROM queues q WHERE q.slot_id = ss.id AND DATE(q.waktu_booking) = ? AND q.status IN ("booking","proses"))']: 'jumlah_booking'
+})
+.prepend('2025-06-27')
+```
+
+---
+
+## 🧩 Utilities
+
+```js
+.prepend('value')             // prepend 1 param
+.prepend(['v1', 'v2'])        // prepend multiple
+.debug()                      // log query SQL dan values
+.clone()                      // clone instance builder
+```
+
+---
+
+## 🔐 Keamanan
+
+- Query menggunakan parameter `?` → aman dari SQL injection
+- Subquery aman dengan `.prepend()`
+- Tidak ada interpolasi nilai langsung ke query
+
+---
+
+## 🧪 Transaksi
+
+```js
+const conn = await db.getConnection();
+await conn.beginTransaction();
+
+await Model('users', conn).insert({ name: 'A' });
+await Model('logs', conn).insert({ message: 'OK' });
+
+await conn.commit();
+conn.release();
+```
+
 ## Contoh Penggunaan
 
 #### Basic Query
@@ -201,7 +357,7 @@ await Model('users')
   .enableAudit('audit_log', { userId: 'admin123' })
   .update({ name: 'Awenk' });
 ```
-## Instalasi
+## ✅ Instalasi
 
 ```bash
 npm install github:badueny/model-builder
@@ -210,9 +366,6 @@ atau
 ```bash
 npm install git+https://github.com/badueny/model-builder.git
 ```
-
-## ✅ Cara Jalankan Contoh Lokal
-
 ```yaml
 Pastikan kamu sudah punya koneksi `config/db.js` yang mengekspor pool `mysql2/promise`.
 ````
@@ -232,6 +385,7 @@ const pool = mysql.createPool({
 module.exports = pool;
 ````
 
+##  Cara Jalankan Contoh Lokal
 ```bash
 git clone https://github.com/badueny/model-builder.git
 cd model-builder
