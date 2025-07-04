@@ -37,19 +37,19 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 ### 📄 Select
 
 ```js
-.select('*')
-.select(['id', 'name'])
-.select({ 'u.name': 'nama', 'COUNT(*)': 'total' })  // alias dan fungsi
+.select('*') // semua kolom
+.select(['id', 'name']) // kolom tertentu
+.select({ 'u.name': 'nama', 'COUNT(*)': 'total' })  // kolom tertentu dengan alias dan fungsi
 ```
 
 ### 🔍 Where & Filter
 
 ```js
-.where('status', 'active')
-.whereOp('age', '>=', 18)
-.orWhere('role', 'editor')
-.whereIn('id', [1, 2, 3])
-.whereLikeAny(['name', 'email'], 'admin')
+.where('status', 'active')   // status = 'active'
+.whereOp('age', '>=', 18)    // age >= 18
+.orWhere('role', 'editor')   // OR role = 'editor'
+.whereIn('id', [1, 2, 3])    // WHERE id IN (1, 2, 3)
+.whereLikeAny(['name', 'email'], 'admin')  // WHERE name LIKE 'admin' OR email LIKE 'admin'
 .whereMultiOp([{ column: 'status', operator: '=', value: 'active' }])
 ```
 
