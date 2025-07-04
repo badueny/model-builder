@@ -11,6 +11,8 @@ class Model {
     this._having = '';
     this._orderBy = '';
     this._limit = '';
+    this._auditTable = null;
+    this._auditMeta = {};
     this._values = [];
   }
 
@@ -31,8 +33,6 @@ class Model {
   return this;
 }
 
-
-
   _wrapIfNeeded(col) {
     // Jika ada fungsi SQL atau operator
     if (/[\s()+\-*/%]/.test(col) || /\(.+\)/.test(col)) return col;
@@ -44,18 +44,12 @@ class Model {
     return `\`${col}\``;
   }
 
-  /*───── JOIN ──────*/
-  join(table, onClause) {
-    this._joins += ` INNER JOIN ${table} ON ${onClause}`;
-    return this;
-  }
+  /*───────── JOIN ─────────*/
+  join(table, on)      { this._joins += ` INNER JOIN ${table} ON ${on}`; return this; }
+  leftJoin(table, on)  { this._joins += ` LEFT JOIN ${table}  ON ${on}`; return this; }
 
-  leftJoin(table, onClause) {
-    this._joins += ` LEFT JOIN ${table} ON ${onClause}`;
-    return this;
-  }
 
-  /*───── WHERE ──────*/
+  /*─────── WHERE ─────────*/
   where(column, value) {
     this._wheres += this._wheres ? ` AND ${column} = ?` : `WHERE ${column} = ?`;
     this._values.push(value);
@@ -116,7 +110,7 @@ class Model {
   orWhereOp(column, operator, value) {
     return this.orWhereWithOperator(column, operator, value);
   }
-
+  
   orWhereMultiOp(conditions = []) {
     if (!conditions.length) return this;
 
@@ -135,6 +129,7 @@ class Model {
 
     return this;
   }
+
 
   whereIn(column, values = []) {
     if (!Array.isArray(values) || values.length === 0) return this;
@@ -158,30 +153,13 @@ class Model {
   /*───────────────────────────
   │ GROUP / HAVING / ORDER / LIMIT
   ───────────────────────────*/
-  groupBy(columns) {
-    if (Array.isArray(columns)) {
-      this._groupBy = ` GROUP BY ${columns.join(', ')}`;
-    } else {
-      this._groupBy = ` GROUP BY ${columns}`;
-    }
+  groupBy(cols) {
+    this._groupBy = ` GROUP BY ${Array.isArray(cols) ? cols.join(', ') : cols}`;
     return this;
   }
-
-  having(condition, value) {
-    this._having = ` HAVING ${condition}`;
-    if (value !== undefined) this._values.push(value);
-    return this;
-  }
-
-  orderBy(column, direction = 'ASC') {
-    this._orderBy = ` ORDER BY ${column} ${direction.toUpperCase()}`;
-    return this;
-  }
-
-  limit(n) {
-    this._limit = ` LIMIT ${parseInt(n)}`;
-    return this;
-  }
+  having(cond, val) { this._having = ` HAVING ${cond}`; if (val!==undefined) this._values.push(val); return this; }
+  orderBy(col, dir='ASC') { this._orderBy = ` ORDER BY ${col} ${dir.toUpperCase()}`; return this; }
+  limit(n) { this._limit = ` LIMIT ${parseInt(n)}`; return this; }
 
   /*──────────── preped Param ──────────
   │ prependParam(value) – menambahkan nilai ke awal array _values
@@ -204,8 +182,9 @@ class Model {
     return this;
   }
 
-  /*───────── CLONE ────────────
-  │ duplikasi state builder (berguna untuk count(), exists(), dsb.)
+  /*───────────────────────────
+  │ CLONE  
+  │  – duplikasi state builder (berguna untuk count(), exists(), dsb.)
   ───────────────────────────*/
   clone() {
     const dup            = new Model(this.table, this.conn);
@@ -220,33 +199,48 @@ class Model {
     return dup;
   }
 
-  /*───── BUILD & DEBUG ──────*/
+  /*───────────────────────────
+  │ BUILD & DEBUG
+  ───────────────────────────*/
   _buildSQL() {
     return `SELECT ${this._select} FROM ${this.table}${this._joins}${this._wheres ? ' ' + this._wheres : ''}${this._groupBy}${this._having}${this._orderBy}${this._limit}`;
   }
+  debug() { console.log(this._buildSQL()); console.log(this._values); return this; }
 
-  debug() {
-    console.log(this._buildSQL());
-    console.log(this._values);
-    return this;
+  /*───────────────────────────
+  │ GETTERS
+  ───────────────────────────*/
+  async get()   { const [r]=await (this.conn||db).query(this._buildSQL(),this._values); this._reset(); return r; }
+  async first() { this.limit(1); const [r]=await this.get(); return r||null; }
+
+  /*───────────────────────────
+  │ COUNT / SUM / AVG  
+  ───────────────────────────*/
+  async min(col){
+    this._select=`MIN(${col}) AS min`; const [r]=await (this.conn||db).query(this._buildSQL(),this._values); this._reset(); return r[0]?.min||null; } // 🔹 NEW
+  async max(col){
+    this._select=`MAX(${col}) AS max`; const [r]=await (this.conn||db).query(this._buildSQL(),this._values); this._reset(); return r[0]?.max||null; } // 🔹 NEW
+
+  /*───────────────────────────
+  │ EXISTS – boolean cepat 🔹 NEW
+  ───────────────────────────*/
+  async exists() {
+    const clone = this.clone().select('1').limit(1);
+    const [r]   = await (clone.conn||db).query(clone._buildSQL(), clone._values);
+    return r.length > 0;
   }
 
-  /*───── GETTERS ──────*/
-  async get() {
-    const sql = this._buildSQL();
-    const runner = this.conn || db; // ← gunakan koneksi manual jika ada
-    const [rows] = await runner.query(sql, this._values);
-    this._reset();
-    return rows;
+  /*───────────────────────────
+  │ PLUCK – ambil satu kolom semua baris 🔹 NEW
+  ───────────────────────────*/
+  async pluck(column) {
+    const rows = await this.select(column).get();
+    return rows.map(r => r[column]);
   }
 
-  async first() {
-    this.limit(1);
-    const [row] = await this.get();
-    return row || null;
-  }
-
-  /*───── PAGINATE ──────*/
+  /*───────────────────────────
+  │ PAGINATE 
+  ───────────────────────────*/
   async paginate(page = 1, perPage = 10) {
     const offset = (page - 1) * perPage;
     const sql = `SELECT ${this._select} FROM ${this.table}${this._joins} ${this._wheres}${this._groupBy}${this._having}${this._orderBy} LIMIT ? OFFSET ?`;
@@ -263,9 +257,10 @@ class Model {
     return { data, total, page, perPage, lastPage };
   }
 
-  /*──────── COUNTING ────────
-  │ COUNT / SUM / AVG / MIN / MAX
+  /*───────────────────────────
+  │ COUNT / SUM / AVG  / MIN / MAX
   ───────────────────────────*/
+
   async count(column = '*') {
     this._select = `COUNT(${column}) AS total`;
     const runner = this.conn || db;
@@ -289,31 +284,9 @@ class Model {
     this._reset();
     return rows[0]?.average || 0;
   }
-  
-  async min(col){
-    this._select=`MIN(${col}) AS min`; const [r]=await (this.conn||db).query(this._buildSQL(),this._values); this._reset(); return r[0]?.min||null; } // 🔹 NEW
-  async max(col){
-    this._select=`MAX(${col}) AS max`; const [r]=await (this.conn||db).query(this._buildSQL(),this._values); this._reset(); return r[0]?.max||null; } // 🔹 NEW
 
-  /*───────────────────────────
-  │ EXISTS – boolean cepat 
-  ───────────────────────────*/
-  async exists() {
-    const clone = this.clone().select('1').limit(1);
-    const [r]   = await (clone.conn||db).query(clone._buildSQL(), clone._values);
-    return r.length > 0;
-  }
-
-  /*───────────────────────────
-  │ PLUCK – ambil satu kolom semua baris 
-  ───────────────────────────*/
-  async pluck(column) {
-    const rows = await this.select(column).get();
-    return rows.map(r => r[column]);
-  }
-
-  /*─────── TRANSACTIONS ────────
-  │ INSERT / BULK INSERT / UPSERT / UPDATE / DELETE
+  /*─────── TRANSACTIONS ──────────
+  │ INSERT / BULK INSERT / UPSERT  / UPDATE / DELETE
   ───────────────────────────*/
 
     /* ---------- INSERT ---------- */
@@ -324,6 +297,13 @@ class Model {
     const sql  = `INSERT INTO ${this.table} (${cols.join(', ')}) VALUES (${ph})`;
     const runner = this.conn || db;
     const [res] = await runner.query(sql, vals);
+
+    // Audit
+    await this._logAudit('insert', {
+      record_id: res.insertId,
+      after: data
+    });
+    this._reset();
     return res.insertId;
   }
 
@@ -366,31 +346,43 @@ class Model {
    */
   async upsertMany(rows = [], updateCols = []) {
     if (!Array.isArray(rows) || rows.length === 0) return 0;
-  
+
     const cols   = Object.keys(rows[0]);
     const phRow  = `(${cols.map(() => '?').join(', ')})`;
     const phAll  = rows.map(() => phRow).join(', ');
     const vals   = rows.flatMap(r => cols.map(c => r[c]));
-  
+
     // kalau updateCols belum ditentukan, update semua kecuali kolom pertama (anggap PK)
     if (updateCols.length === 0) updateCols = cols.slice(1);
-  
+
     const updates = updateCols.map(c => `${c}=VALUES(${c})`).join(', ');
-  
+
     const sql = `INSERT INTO ${this.table} (${cols.join(', ')}) VALUES ${phAll}
-                 ON DUPLICATE KEY UPDATE ${updates}`;
-  
-    const [res] = await (this.conn || db).query(sql, vals);
+                ON DUPLICATE KEY UPDATE ${updates}`;
+    const runner = this.conn || db;
+    const [res] = await runner.query(sql, vals);
     return res.affectedRows;      // insert + update rows (MySQL behaviour)
   }
-  
+
+
   /* ---------- UPDATE ---------- */
   async update(data = {}) {
     if (!this._wheres) throw new Error('update() membutuhkan where()!');
+    // Audit Before
+    const before = await this.clone().first();
+    //update
     const sql = `UPDATE ${this.table} SET ${Object.keys(data).map(k => `${k}=?`).join(', ')} ${this._wheres}`;
     const vals = [...Object.values(data), ...this._values];
     const runner = this.conn || db;
     const [res] = await runner.query(sql, vals);
+
+    // Audit
+    await this._logAudit('update', {
+      record_id: before?.id || null,
+      before,
+      after: { ...before, ...data }
+    });
+
     this._reset();
     return res.affectedRows;
   }
@@ -398,28 +390,111 @@ class Model {
   /* ---------- DELETE ---------- */
   async delete() {
     if (!this._wheres) throw new Error('delete() membutuhkan where()!');
+    const before = await this.clone().get();
+
     const sql = `DELETE FROM ${this.table} ${this._wheres}`;
     const runner = this.conn || db;   
     const [res] = await runner.query(sql, this._values);
+
+    // Audit
+    await this._logAudit('delete', {
+      record_id: before[0]?.id || null,
+      before
+    });
     this._reset();
     return res.affectedRows;
   }
 
-  /* ---------- INCREMENT / DECREMENT ---------- */           
+  /* ---------- INCREMENT / DECREMENT ---------- */            // 🔹 NEW
   async increment(column, amount = 1) {
     if (!this._wheres) throw new Error('increment() membutuhkan where()!');
     const sql   = `UPDATE ${this.table} SET ${column} = ${column} + ? ${this._wheres}`;
     const vals  = [amount, ...this._values];
-    const [res] = await (this.conn || db).query(sql, vals);
+    const runner = this.conn || db;
+    const [res] = await runner.query(sql, vals);
     this._reset();
     return res.affectedRows;
   }
-  
-  async decrement(column, amount = 1) {                       
+
+  async decrement(column, amount = 1) {                        // 🔹 NEW
     return this.increment(column, -amount);
   }
 
-  /*─────── RESET ───────*/
+  /*───────────────────────────
+  │ AUDIT LOGGING – untuk mencatat perubahan data 🔹 NEW
+  ───────────────────────────*/
+  enableAudit(table, meta = {}) {
+    this._auditTable = table;
+    this._auditMeta = meta;
+    return this;
+  }
+
+  async _logAudit(action, { record_id = null, before = null, after = null } = {}) {
+    if (!this._auditTable) return;
+
+    const data = {
+      table_name: this.table,
+      action,
+      record_id,
+      before_data: before ? JSON.stringify(before) : null,
+      after_data: after ? JSON.stringify(after) : null,
+      user_id: this._auditMeta?.userId || null,
+      created_at: new Date()
+    };
+
+    const cols = Object.keys(data);
+    const ph   = cols.map(() => '?').join(', ');
+    const sql  = `INSERT INTO ${this._auditTable} (${cols.join(', ')}) VALUES (${ph})`;
+
+    try {
+      const runner = this.conn || db;
+      await runner.query(sql, Object.values(data));
+    } catch (err) {
+      // Jika tabel tidak ada, buat audit_log secara otomatis
+      if (err.message.includes("doesn't exist") || err.message.includes("ER_NO_SUCH_TABLE")) {
+        console.warn('[Audit_log table missing] Creating table...');
+
+        await db.query(`
+          CREATE TABLE IF NOT EXISTS ${this._auditTable} (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            table_name VARCHAR(50),
+            action CHAR(250),
+            record_id VARCHAR(36),
+            before_data JSON,
+            after_data JSON,
+            user_id CHAR(36),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+
+        // Coba simpan ulang setelah berhasil membuat
+        const runner = this.conn || db;
+        await runner.query(sql, Object.values(data));
+      } else {
+        console.warn('[Audit_log skipped]', err.message);
+      }
+    }
+  }
+
+
+  /*───────────────────────────
+  │ EXISTS – boolean cepat 
+  ───────────────────────────*/
+  async exists() {
+    const clone = this.clone().select('1').limit(1);
+    const [r]   = await (clone.conn||db).query(clone._buildSQL(), clone._values);
+    return r.length > 0;
+  }
+
+  /*───────────────────────────
+  │ PLUCK – ambil satu kolom semua baris 
+  ───────────────────────────*/
+  async pluck(column) {
+    const rows = await this.select(column).get();
+    return rows.map(r => r[column]);
+  }
+
+  /*──────── RESET ─────────*/  
   _reset() {
     this._select = '*';
     this._joins = '';
@@ -428,9 +503,12 @@ class Model {
     this._having = '';
     this._orderBy = '';
     this._limit = '';
+    this._auditTable = null;
+    this._auditMeta = {};
     this._values = [];
   }
 }
 
 
 module.exports = (table, conn = null) => new Model(table, conn);
+
