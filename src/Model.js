@@ -163,6 +163,42 @@ class Model {
   }
   having(cond, val) { this._having = ` HAVING ${cond}`; if (val!==undefined) this._values.push(val); return this; }
   orderBy(col, dir='ASC') { this._orderBy = ` ORDER BY ${col} ${dir.toUpperCase()}`; return this; }
+  orderByMulti(orderArray = [], columnsArray = []) {
+    const orders = [];
+  
+    // Mode: DataTables (order[], columns[])
+    if (Array.isArray(orderArray) && orderArray[0]?.column !== undefined) {
+      for (const ord of orderArray) {
+        const colIndex = ord.column;
+        const dir = (ord.dir || 'asc').toUpperCase();
+        const colName = columnsArray?.[colIndex]?.data;
+  
+        if (colName && typeof colName === 'string') {
+          const safeCol = colName.replace(/[^a-zA-Z0-9_.]/g, '');
+          orders.push(`${safeCol} ${dir}`);
+        }
+      }
+    }
+  
+    // Mode: Manual arrays (['asc','desc'], ['name','email'])
+    else if (Array.isArray(orderArray) && Array.isArray(columnsArray)) {
+      for (let i = 0; i < columnsArray.length; i++) {
+        const col = columnsArray[i];
+        const dir = (orderArray[i] || 'asc').toUpperCase();
+        if (col && typeof col === 'string') {
+          const safeCol = col.replace(/[^a-zA-Z0-9_.]/g, '');
+          orders.push(`${safeCol} ${dir}`);
+        }
+      }
+    }
+  
+    if (orders.length) {
+      this._orderBy = ' ORDER BY ' + orders.join(', ');
+    }
+  
+    return this;
+  }
+
   limit(n) { this._limit = ` LIMIT ${parseInt(n)}`; return this; }
 
   /*──────────── preped Param ──────────
