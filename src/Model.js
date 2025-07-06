@@ -71,6 +71,10 @@ class Model {
     return this.whereWithOperator(column, operator, value);
   }
 
+  whereNot(col, val) {
+    return this.whereOp(col, '!=', val);
+  }; 
+
   whereMultiOp(conditions = []) {
     for (const cond of conditions) {
       const { column, operator = '=', value } = cond;
