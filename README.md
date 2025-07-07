@@ -64,9 +64,11 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 ### 📦 Group / Having / Order / Limit
 
 ```js
-.groupBy(['role', 'status'])
+.groupBy('status') //single gruping
+.groupBy(['role', 'status']) //multiple gruping 
 .having('COUNT(*) > ?', 5) 
-.orderBy('created_at', 'desc') 	// multi sort-> .orderByMulti(['desc', 'asc'], ['status','created_at'])
+.orderBy('created_at', 'desc') 	//single sort 
+.orderByMulti(['desc', 'asc'], ['status','created_at']) //multiple sort
 .limit(10)
 .offset(5)
 ```
@@ -107,7 +109,7 @@ await Model('produk')
 ```js
 .insert({ name: 'John' })
 .insertMany([{...}, {...}])
-.insertUpdate({ id: 1, name: 'Baru' }, ['id'])  // upsert
+.insertUpdate({ id: 1, name: 'Baru' }, ['id'])  // upsert dengan on duplicate update kolom ID
 
 .update({ name: 'Update' }).where('id', 1)
 .delete().where('id', 1)
