@@ -49,12 +49,20 @@ class Model {
   leftJoin(table, on)  { this._joins += ` LEFT JOIN ${table}  ON ${on}`; return this; }
 
 
-  /*─────── WHERE ─────────*/
+  /*─────── WHERE ─────────*/  
   where(column, value) {
+    if (typeof column === 'object' && !Array.isArray(column)) {
+      for (const [key, val] of Object.entries(column)) {
+        this.where(key, val); // panggil rekursif
+      }
+      return this;
+    }
+  
     this._wheres += this._wheres ? ` AND ${column} = ?` : `WHERE ${column} = ?`;
     this._values.push(value);
     return this;
   }
+
 
   whereWithOperator(column, operator, value) {
     if (arguments.length === 2) {
