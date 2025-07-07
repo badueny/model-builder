@@ -14,6 +14,7 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 | `prependParam()`            | mengatur urutan parameter Subquery SQL dalam select       |
 | `groupBy()`, `having()`     | GROUP BY dan HAVING dengan support placeholder            |
 | `orderBy()`, `limit()`      | Sorting dan pembatasan hasil                              |
+| `orderByMulti()`	      | Multiple Sorting Kolom
 | `insert()`                  | Simpan 1 data                                             |
 | `insertMany()`              | Simpan bulk array                                         |
 | `insertUpdate()`            | UPSERT (insert or update on duplicate)                    |
@@ -64,8 +65,8 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 
 ```js
 .groupBy(['role', 'status'])
-.having('COUNT(*) > ?', 5)
-.orderBy('created_at', 'desc')
+.having('COUNT(*) > ?', 5) 
+.orderBy('created_at', 'desc') 	// multi sort-> .orderByMulti(['desc', 'asc'], ['status','created_at'])
 .limit(10)
 .offset(5)
 ```
