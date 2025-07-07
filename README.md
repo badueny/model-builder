@@ -110,7 +110,7 @@ await Model('produk')
 ```js
 .insert({ name: 'John' })
 .insertMany([{...}, {...}])
-.insertUpdate({ id: 1, name: 'Baru' }, ['id'])  // upsert dengan on duplicate update kolom ID
+.insertUpdate({ id: 1, name: 'Baru' }, ['id'])  // upsert dengan on duplicate update kolom id (wajib unique)
 
 .update({ name: 'Update' }).where('id', 1)
 .delete().where('id', 1)
