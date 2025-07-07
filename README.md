@@ -46,7 +46,8 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 ### 🔍 Where & Filter
 
 ```js
-.where('status', 'active')   // status = 'active'
+.where('status', 'active')   // pencarian satu kolom -> status = 'active'
+.where({'id':1, 'status':'active'})   // pencarian banyak kolom -> id = 1 AND status = 'active'
 .whereOp('age', '>=', 18)    // age >= 18
 .orWhere('role', 'editor')   // OR role = 'editor'
 .whereIn('id', [1, 2, 3])    // WHERE id IN (1, 2, 3)
