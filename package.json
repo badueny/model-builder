@@ -1,6 +1,6 @@
 {
   "name": "@awenk/model-builder",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "description": "Dynamic SQL query builder & mini ORM for Node + MySQL",
   "main": "index.js",
   "type": "commonjs",
