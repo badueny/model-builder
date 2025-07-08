@@ -196,20 +196,20 @@ conn.release();
 
 #### Basic Query
 ```js
-
 const { Model, withTransaction } = require('@awenk/model-builder');
-
+```
+```js
 await Model('users')
   .select(['id', 'name'])
   .where('status', 'active')
   .orderBy('id', 'DESC')
   .paginate(1, 10);
-
+````
+```js
 await withTransaction(async (conn, Model) => {
   const userId = await Model('users').insert({ name: 'Awenk' });
   await Model('orders').insert({ user_id: userId, total: 10000 });
 });
-
 ```
 #### Pagination
 ```js
