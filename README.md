@@ -179,19 +179,6 @@ console.log(result);
 
 ---
 
-## 🧪 Transaksi
-
-```js
-const conn = await db.getConnection();
-await conn.beginTransaction();
-
-await Model('users', conn).insert({ name: 'A' });
-await Model('logs', conn).insert({ message: 'OK' });
-
-await conn.commit();
-conn.release();
-```
-
 ## Contoh Penggunaan
 
 #### Basic Query
@@ -239,6 +226,7 @@ await withTransaction(async (conn, Model) => {
 });
 
 ```
+> ⚠️ Definisikan Model di dalam `withTransaction`, Jangan Diluar.
 
 #### Insert atau Update (Upsert)
 
