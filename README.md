@@ -78,14 +78,14 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 
 ## 💳 Eksekusi
 
-| Method        | Keterangan                     |
-|---------------|--------------------------------|
-| `.get()`      | Ambil semua hasil              |
-| `.first()`    | Ambil 1 data (LIMIT 1)         |
-| `.exists()`   | Cek apakah ada data            |
-| `.pluck(col)` | Ambil semua isi 1 kolom        |
-| `.debug()`    | Lihat query SQL & value        |
-| `.clone()`    | Duplikat instance builder      |
+| Method        	| Keterangan                     |
+|-----------------------|--------------------------------|
+| `.get()`      	| Ambil semua hasil              |
+| `.first()`    	| Ambil 1 data (LIMIT 1)         |
+| `.exists()`   	| Cek apakah ada data            |
+| `.pluck(col_name)` 	| Ambil semua isi dari 1 kolom   |
+| `.debug()`    	| Lihat query SQL & value        |
+| `.clone()`    	| Duplikat instance builder      |
 
 ---
 
