@@ -370,8 +370,10 @@ const pool = mysql.createPool({
   host: 'localhost',
   user: 'root',
   database: 'mydb',
+  password: 'myuser-db-password',
   waitForConnections: true,
-  connectionLimit: 10
+  connectionLimit: 100,
+  queueLimit: 0
 });
 
 module.exports = pool;
