@@ -170,6 +170,22 @@ class Model {
     return this;
   }
 
+  /* ───────── WHERE RAW ───────── */
+  whereRaw(sqlFragment, vals = []) {
+    // contoh: whereRaw('TIMESTAMPDIFF(MINUTE, waktu_proses, NOW()) > ?', [15])
+    if (this._wheres) {
+      this._wheres += ` AND (${sqlFragment})`;
+    } else {
+      this._wheres = `WHERE (${sqlFragment})`;
+    }
+    if (Array.isArray(vals)) {
+      this._values.push(...vals);
+    } else {
+      this._values.push(vals);
+    }
+    return this;
+  }
+
   /*───────────────────────────
   │ GROUP / HAVING / ORDER / LIMIT
   ───────────────────────────*/
