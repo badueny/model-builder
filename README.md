@@ -12,7 +12,7 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 | `whereIn()`                 | WHERE IN untuk array nilai                                |
 | `whereLikeAny()`            | LIKE di banyak kolom secara OR                            |
 | `prependParam()`            | mengatur urutan parameter Subquery SQL dalam select       |
-| `modify()`                  | kondisi dinamis       					  |
+| `modify(query => {...})`    | untuk menambahkan filter bersyarat secara dinamis	  |
 | `groupBy()`, `having()`     | GROUP BY dan HAVING dengan support placeholder            |
 | `orderBy()`, `limit()`      | Sorting dan pembatasan hasil                              |
 | `orderByMulti()`	      | Multiple Sorting Kolom
@@ -55,9 +55,10 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 .whereLikeAny(['name', 'email'], 'admin')  // WHERE name LIKE 'admin' OR email LIKE 'admin'
 .whereMultiOp([{ column: 'status', operator: '=', value: 'active' }])
 .modify(query => {
-    if (role === 'admin') query.where('b.induk_id', induk_admin_id);
-    if (role === 'cs'  || role === 'cs') query.where('b.uuid', cabang_id);
-  }) // Modifikasi Pencarian -> contoh implementasi berdasarkan role user
+  // Tambahkan filter dinamis berdasarkan session role user
+  if (role === 'admin') query.where('induk_id', user.induk_id);
+  if (role === 'cs') query.where('id', user.id);
+})
 ```
 
 ### 🔗 Join
