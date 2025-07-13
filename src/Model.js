@@ -163,6 +163,14 @@ class Model {
   }
 
   /*───────────────────────────
+  │ DYNAMIC CONDITIONS
+  ───────────────────────────*/
+  modify(cb) {
+    cb(this);
+    return this;
+  }
+
+  /*───────────────────────────
   │ GROUP / HAVING / ORDER / LIMIT
   ───────────────────────────*/
   groupBy(cols) {
