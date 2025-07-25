@@ -387,10 +387,10 @@ Isi file -> `config/db.js`:
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  database: 'mydb',
-  password: 'myuser-db-password',
+  host: 'host-db-server',
+  user: 'username-db',
+  database: 'db-name',
+  password: 'db-password',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
