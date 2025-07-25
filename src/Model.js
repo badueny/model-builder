@@ -303,10 +303,21 @@ class Model {
           const localValues = [...new Set(r.map(r => r[rel.localKey]))];
           if (localValues.length === 0) continue;
   
-          // Build query anak
+          // Build query child
           let childQuery = new Model(rel.relationName).whereIn(rel.foreignKey, localValues);
           if (rel.select) childQuery = childQuery.select(rel.select);
           const children = await childQuery.get();
+
+          if (rel.alias) {
+            for (const child of children) {
+              for (const [oldKey, newKey] of Object.entries(rel.alias)) {
+                if (child.hasOwnProperty(oldKey)) {
+                  child[newKey] = child[oldKey];
+                  delete child[oldKey];
+                }
+              }
+            }
+          }
   
           // Inject hasil relasi ke tiap row
           for (const row of r) {
@@ -326,6 +337,17 @@ class Model {
         let parentQuery = new Model(rel.relationName).whereIn(rel.ownerKey, foreignValues);
         if (rel.select) parentQuery = parentQuery.select(rel.select);
         const parents = await parentQuery.get();
+
+        if (rel.alias) {
+          for (const child of parents) {
+            for (const [oldKey, newKey] of Object.entries(rel.alias)) {
+              if (child.hasOwnProperty(oldKey)) {
+                child[newKey] = child[oldKey];
+                delete child[oldKey];
+              }
+            }
+          }
+        }
     
         // Inject hasil parent ke tiap baris
         for (const row of r) {
@@ -363,6 +385,17 @@ class Model {
         let childQuery = new Model(rel.relationName).whereIn(rel.foreignKey, localValues);
         if (rel.select) childQuery = childQuery.select(rel.select);
         const children = await childQuery.get();
+
+        if (rel.alias) {
+          for (const child of children) {
+            for (const [oldKey, newKey] of Object.entries(rel.alias)) {
+              if (child.hasOwnProperty(oldKey)) {
+                child[newKey] = child[oldKey];
+                delete child[oldKey];
+              }
+            }
+          }
+        }
     
         for (const row of r) {
           row[rel.name] = children.find(c => c[rel.foreignKey] === row[rel.localKey]) || null;
@@ -380,46 +413,15 @@ class Model {
   }
 
   /* -- contoh penggunaan relasi
-  const services = await Model('services')
-    .with('slots', {
-      type: 'hasMany',
-      relationName: 'service_slots',
-      foreignKey: 'service_id',
-      localKey: 'id',
-      select: ['id', 'start_time', 'end_time']
+  Model('users')             // ✅ Tabel utama (yang punya relasi)
+    .with('profile', {       // ✅ Alias relasi yang nanti muncul di hasil (akan jadi `user.profile`)
+      type: 'hasOne',        // ✅ Jenis relasi (inject satu objek anak) hasOne/belongsTo/hasMany
+      relationName: 'user_profiles',  // ✅ Nama tabel relasi (anak)
+      foreignKey: 'user_id',          // ✅ Kolom `user_id` di tabel `user_profiles` (anak)
+      localKey: 'id',                 // ✅ Kolom `id` di tabel `users` (induk)
+      select: ['id', 'user_id', 'alamat', 'telp']  // ✅ Kolom-kolom yang diambil dari relasi
     })
-    .with('branch', {
-      type: 'belongsTo',
-      relationName: 'branches',
-      foreignKey: 'branch_id',
-      ownerKey: 'uuid',
-      select: ['uuid', 'name']
-    })
-    .get();
-    //Raw
-    .with('slots', {
-      type: 'hasManyRaw',
-      sql: `SELECT q.*, COALESCE(cnt.total, 0) AS dipakai
-            FROM service_slots q
-            LEFT JOIN (
-              SELECT slot_id, COUNT(*) AS total
-              FROM queues
-              GROUP BY slot_id
-            ) AS cnt ON cnt.slot_id = q.id`,
-      foreignKey: 'service_id',
-      localKey: 'id'
-    })
-    .get();
-    //hasOne
-    Model('users')
-      .with('profile', {
-        type: 'hasOne',
-        relationName: 'user_profiles',
-        foreignKey: 'user_id',
-        localKey: 'id',
-        select: ['id', 'user_id', 'alamat', 'telp']
-      })
-      .get();
+
   ------------------*/
  
 
