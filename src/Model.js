@@ -14,6 +14,7 @@ class Model {
     this._auditTable = null;
     this._auditMeta = {};
     this._values = [];
+    this._withs = []; //Relasi
   }
 
   /*───────BASIC SELECT──────*/
@@ -280,10 +281,147 @@ class Model {
   debug() { console.log(this._buildSQL()); console.log(this._values); return this; }
 
   /*───────────────────────────
+  │ Fungsi Relasi hasMany, hasManyRaw, belongsTo, hasOne
+  ───────────────────────────*/
+  with(relationName, options = {}) {
+    this._withs = this._withs || [];
+    this._withs.push({ name: relationName, ...options });
+    return this;
+  }
+  
+  /*───────────────────────────
   │ GETTERS
   ───────────────────────────*/
-  async get()   { const [r]=await (this.conn||db).query(this._buildSQL(),this._values); this._reset(); return r; }
-  async first() { this.limit(1); const [r]=await this.get(); return r||null; }
+  async get()   { 
+    const [r]=await (this.conn||db).query(this._buildSQL(),this._values); 
+    this._reset(); 
+
+    // --- Handle relasi hasMany : inject array---
+    if (this._withs?.length && r.length) {
+      for (const rel of this._withs) {
+        if (rel.type === 'hasMany') {
+          const localValues = [...new Set(r.map(r => r[rel.localKey]))];
+          if (localValues.length === 0) continue;
+  
+          // Build query anak
+          let childQuery = new Model(rel.relationName).whereIn(rel.foreignKey, localValues);
+          if (rel.select) childQuery = childQuery.select(rel.select);
+          const children = await childQuery.get();
+  
+          // Inject hasil relasi ke tiap row
+          for (const row of r) {
+            row[rel.name] = children.filter(c => c[rel.foreignKey] === row[rel.localKey]);
+          }
+        }
+      }
+    }
+
+    // ---- Handle Relasi Belongsto : inject 1 objek ---
+    for (const rel of this._withs) {
+      if (rel.type === 'belongsTo') {
+        const foreignValues = [...new Set(r.map(r => r[rel.foreignKey]))];
+        if (foreignValues.length === 0) continue;
+    
+        // Ambil data parent
+        let parentQuery = new Model(rel.relationName).whereIn(rel.ownerKey, foreignValues);
+        if (rel.select) parentQuery = parentQuery.select(rel.select);
+        const parents = await parentQuery.get();
+    
+        // Inject hasil parent ke tiap baris
+        for (const row of r) {
+          row[rel.name] = parents.find(p => p[rel.ownerKey] === row[rel.foreignKey]) || null;
+        }
+      }
+    }
+
+    // --- Handle relasi hasManyRaw : inject array hasil dari subquery manual ---
+    for (const rel of this._withs) {
+      if (rel.type === 'hasManyRaw') {
+        const localValues = [...new Set(r.map(row => row[rel.localKey]))];
+        if (localValues.length === 0) continue;
+    
+        const inClause = localValues.map(() => '?').join(',');
+        const query = `
+          SELECT * FROM (${rel.sql}) AS sub
+          WHERE ${rel.foreignKey} IN (${inClause})
+        `;
+        const [children] = await (this.conn || db).query(query, localValues);
+    
+        // Inject relasi ke masing-masing row
+        for (const row of r) {
+          row[rel.name] = children.filter(c => c[rel[foreignKey]] === row[rel.localKey]);
+        }
+      }
+    }
+
+    // --- Handle relasi hasOne : inject 1 objek anak ---
+    for (const rel of this._withs) {
+      if (rel.type === 'hasOne') {
+        const localValues = [...new Set(r.map(row => row[rel.localKey]))];
+        if (localValues.length === 0) continue;
+    
+        let childQuery = new Model(rel.relationName).whereIn(rel.foreignKey, localValues);
+        if (rel.select) childQuery = childQuery.select(rel.select);
+        const children = await childQuery.get();
+    
+        for (const row of r) {
+          row[rel.name] = children.find(c => c[rel.foreignKey] === row[rel.localKey]) || null;
+        }
+      }
+    }
+    
+    return r; 
+  }
+  
+  async first() { 
+    this.limit(1); 
+    const r = await this.get(); 
+    return Array.isArray(r) && r.length ? r[0] : null;
+  }
+
+  /* -- contoh penggunaan relasi
+  const services = await Model('services')
+    .with('slots', {
+      type: 'hasMany',
+      relationName: 'service_slots',
+      foreignKey: 'service_id',
+      localKey: 'id',
+      select: ['id', 'start_time', 'end_time']
+    })
+    .with('branch', {
+      type: 'belongsTo',
+      relationName: 'branches',
+      foreignKey: 'branch_id',
+      ownerKey: 'uuid',
+      select: ['uuid', 'name']
+    })
+    .get();
+    //Raw
+    .with('slots', {
+      type: 'hasManyRaw',
+      sql: `SELECT q.*, COALESCE(cnt.total, 0) AS dipakai
+            FROM service_slots q
+            LEFT JOIN (
+              SELECT slot_id, COUNT(*) AS total
+              FROM queues
+              GROUP BY slot_id
+            ) AS cnt ON cnt.slot_id = q.id`,
+      foreignKey: 'service_id',
+      localKey: 'id'
+    })
+    .get();
+    //hasOne
+    Model('users')
+      .with('profile', {
+        type: 'hasOne',
+        relationName: 'user_profiles',
+        foreignKey: 'user_id',
+        localKey: 'id',
+        select: ['id', 'user_id', 'alamat', 'telp']
+      })
+      .get();
+  ------------------*/
+ 
 
   /*───────────────────────────
   │ COUNT / SUM / AVG  
@@ -578,6 +716,7 @@ class Model {
     this._auditTable = null;
     this._auditMeta = {};
     this._values = [];
+    this._withs = [];
   }
 }
 
