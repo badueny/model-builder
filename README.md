@@ -84,13 +84,13 @@ Terinspirasi dari *Laravel Eloquent dan Knex.js*, `model-builder` memungkinkan k
 ### Relasi Tabel hasOne/hasMany/belongsTo
 
 ```js
-Model('users')             // ✅ Tabel utama (yang punya relasi)
-  .with('profile', {       // ✅ Alias relasi yang nanti muncul di hasil (akan jadi `user.profile`)
-    type: 'hasOne',        // ✅ Jenis relasi (hasOne/hasMany/belongsTo)
-    relationName: 'user_profiles',  // ✅ Nama tabel relasi (anak)
-    foreignKey: 'user_id',          // ✅ Kolom `user_id` di tabel `user_profiles` (anak)
-    localKey: 'id',                 // ✅ Kolom `id` di tabel `users` (induk)
-    select: ['id', 'user_id', 'alamat', 'telp']  // ✅ Kolom-kolom yang diambil dari relasi
+Model('users')             // Tabel utama (yang punya relasi)
+  .with('profile', {       // Alias relasi yang nanti muncul di hasil (akan jadi `user.profile`)
+    type: 'hasOne',        // Jenis relasi (hasOne/hasMany/belongsTo)
+    relationName: 'user_profiles',  // Nama tabel relasi (anak)
+    foreignKey: 'user_id',          // Kolom `user_id` di tabel `user_profiles` (anak)
+    localKey: 'id',                 // Kolom `id` di tabel `users` (induk)
+    select: ['id', 'user_id', 'alamat', 'telp']  // Kolom-kolom yang diambil dari relasi
   })
 
 ```
