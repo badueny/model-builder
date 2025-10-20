@@ -152,6 +152,14 @@ class Model {
     return this;
   }
 
+  whereNotIn(column, values = []) {
+    if (!Array.isArray(values) || values.length === 0) return this;
+    const placeholders = values.map(() => '?').join(', ');
+    this._wheres += this._wheres ? ` AND ${column} NOT IN (${placeholders})` : `WHERE ${column} NOT IN (${placeholders})`;
+    this._values.push(...values);
+    return this;
+  }
+
   whereLikeAny(columns, search) {
     if (!Array.isArray(columns) || !search) return this;
     const likeClauses = columns.map(col => `${col} LIKE ?`).join(' OR ');
