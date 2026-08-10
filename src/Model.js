@@ -461,7 +461,24 @@ class Model {
   /*───────────────────────────
   │ PAGINATE 
   ───────────────────────────*/
-  async paginate(page = 1, perPage = 10) {
+   async paginate(page = 1, perPage = 10) {
+    const offset = (page - 1) * perPage;
+    const sql = `SELECT ${this._select} FROM ${this.table}${this._joins} ${this._wheres}${this._groupBy}${this._having}${this._orderBy} LIMIT ? OFFSET ?`;
+    const values = [...this._values, perPage, offset];
+    const runner = this.conn || db;
+    const [data] = await runner.query(sql, values);
+
+    const countSql = this._groupBy
+      ? `SELECT COUNT(*) AS total FROM (SELECT 1 FROM ${this.table}${this._joins} ${this._wheres}${this._groupBy}${this._having}) AS _cnt`
+      : `SELECT COUNT(*) AS total FROM ${this.table}${this._joins} ${this._wheres}${this._having}`;
+    const [countResult] = await runner.query(countSql, this._values);
+    const total = countResult[0]?.total || 0;
+    const lastPage = Math.ceil(total / perPage);
+
+    this._reset();
+    return { data, total, page, perPage, lastPage };
+  }
+  /*async paginate(page = 1, perPage = 10) {
     const offset = (page - 1) * perPage;
     const sql = `SELECT ${this._select} FROM ${this.table}${this._joins} ${this._wheres}${this._groupBy}${this._having}${this._orderBy} LIMIT ? OFFSET ?`;
     const values = [...this._values, perPage, offset];
@@ -475,7 +492,7 @@ class Model {
 
     this._reset();
     return { data, total, page, perPage, lastPage };
-  }
+  }*/
 
   /*───────────────────────────
   │ COUNT / SUM / AVG  / MIN / MAX
